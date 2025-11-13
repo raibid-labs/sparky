@@ -4,8 +4,9 @@
 
 Sparky is an autonomous system that monitors git activity across all raibid-labs repositories, generates intelligent summaries, and produces engaging content for blogs and social media.
 
-**Project Status:** Design Phase Complete - 100% OSS Implementation Ready
+**Project Status:** Implementation Ready - Rust + k3s + Justfile + Nushell
 **Last Updated:** 2025-11-12
+**Timeline:** 60-70 days with parallel workstreams
 
 ---
 
@@ -21,26 +22,47 @@ Sparky transforms raw development activity into compelling narratives using **10
 
 **No API costs. No external dependencies. Runs completely locally.**
 
-## Quick Start (15 Minutes)
+## Quick Start
+
+### For Prototyping (15 Minutes)
 
 ```bash
-# 1. Install Ollama
+# Using existing Bash/Python scripts
 curl -fsSL https://ollama.com/install.sh | sh
-
-# 2. Pull model (1.1GB, one-time)
 ollama pull qwen2.5-coder:1.5b
-
-# 3. Collect today's data (free, no API limits)
 ./docs/examples/collect-gh.sh
-
-# 4. Generate summary (local AI, free)
 python3 docs/examples/analyze-ollama.py
-
-# Done! View output
-cat output/daily/$(date +%Y-%m-%d).md
+cat output/daily/$(date +%Y-%m-% d).md
 ```
 
-**See [QUICKSTART_OSS.md](./QUICKSTART_OSS.md) for detailed guide.**
+**See [QUICKSTART_OSS.md](./QUICKSTART_OSS.md) for this approach.**
+
+### For Production (Rust Implementation)
+
+```bash
+# Prerequisites: Rust, Just, Nushell, Docker, k3d
+just check-requirements
+
+# Create local k3s cluster
+just k3d-create
+
+# Deploy Ollama
+just deploy-ollama
+
+# Build Sparky (once implemented)
+just build
+
+# Deploy services
+just deploy-local
+
+# Run pipeline
+just pipeline-daily
+
+# Monitor
+just status
+```
+
+**See [IMPLEMENTATION_PROPOSAL.md](./IMPLEMENTATION_PROPOSAL.md) for full details.**
 
 ## Architecture Overview
 
@@ -93,9 +115,11 @@ Publishers (docs, blog, social media)
 
 | Document | Description | Time |
 |----------|-------------|------|
-| **[OSS Quick Start](./QUICKSTART_OSS.md)** | Get running in 15 minutes | ⭐ 15 min |
-| [OSS Deployment Strategy](./docs/OSS_DEPLOYMENT_STRATEGY.md) | Complete technical guide | 30 min |
-| [Infrastructure Guide](./docs/README_INFRASTRUCTURE.md) | DGX integration & K8s | 20 min |
+| **[Implementation Proposal](./IMPLEMENTATION_PROPOSAL.md)** | Rust + k3s architecture ⭐ | 30 min |
+| **[Parallel Workstreams](./PARALLEL_ISSUES.md)** | 18 GitHub issues ready to create | 20 min |
+| [OSS Quick Start](./QUICKSTART_OSS.md) | Prototype with Bash/Python | 15 min |
+| [Justfile Reference](./justfile) | All available commands | 10 min |
+| [dgx-pixels Patterns](./DGX_PIXELS_ORCHESTRATION_PATTERNS.md) | Orchestration patterns reference | 60 min |
 
 ### Core Documentation
 
@@ -121,13 +145,14 @@ These documents informed the design (optional reading):
 ## Technology Stack (100% OSS)
 
 ### Core Technologies
+- **Implementation Language:** Rust (all services)
+- **Task Automation:** Just + Nushell scripts
+- **Orchestration:** k3s (Kubernetes) via k3d (local) or k3sup (production)
 - **Data Collection:** GitHub CLI (gh) - free, no API limits
 - **LLM Inference:** Ollama + Qwen2.5-Coder-1.5B (local, Apache 2.0)
-- **Alternative LLM:** vLLM (production-grade, 10x faster)
-- **Orchestration:** Cron / GitHub Actions + self-hosted runner
+- **IPC:** ZeroMQ (REQ-REP + PUB-SUB patterns)
 - **Storage:** Git repository (JSON + Markdown files)
-- **Scripting:** Bash + Python
-- **Infrastructure:** Docker + Kubernetes (optional)
+- **Containerization:** Docker + Docker Compose
 
 ### Why This Stack?
 - ✅ **$0/month** operating cost
@@ -251,16 +276,56 @@ Total:                ~$0.50/month
 
 ---
 
+## Implementation Approach
+
+### Why Rust + k3s + Justfile + Nushell?
+
+**Based on dgx-pixels successful patterns:**
+- **Rust:** Type safety, performance, excellent ecosystem
+- **k3s:** Lightweight Kubernetes, perfect for DGX deployment
+- **Justfile:** Task automation, better than Make for this use case
+- **Nushell:** Modern shell scripting, structured data handling
+- **ZeroMQ:** Fast IPC, proven in dgx-pixels (<1ms latency)
+
+### Architecture
+
+```
+Meta Orchestrator (Rust)
+    ↓ (ZeroMQ)
+Collector → Analyzer → Generator → Publisher (all Rust)
+    ↓ (calls)
+GitHub CLI + Ollama (external)
+```
+
+All services run in k3s pods, communicate via ZeroMQ, and are orchestrated by the meta orchestrator following phase gates.
+
+### Available Commands
+
+```bash
+# See all commands
+just --list
+
+# Common workflows
+just build                # Build all Rust crates
+just test                 # Run all tests
+just k3d-create          # Create local k3s cluster
+just deploy-local        # Deploy to local k3s
+just pipeline-daily      # Run daily pipeline
+just status              # Check system status
+just logs-follow         # Follow service logs
+
+# Over 50 commands available!
+```
+
 ## Acknowledgments
 
-Sparky builds on proven patterns from across the raibid-labs organization:
+Sparky's architecture is based on proven patterns from raibid-labs projects:
 
-- **raibid-ci:** Event-driven orchestration
-- **raibid-cli:** Multi-repository management
-- **XPTui:** Parallel agent coordination
-- **MOP:** Advanced meta-orchestrator
-- **docs:** Documentation aggregation
-- **agents:** Claude Code sub-agents framework
+- **dgx-pixels:** Orchestration patterns, ZeroMQ, Justfile + Nushell automation ⭐
+- **dgx-spark-playbooks:** Ollama deployment, Docker, k8s patterns
+- **raibid-cli:** Multi-repository management (Rust)
+- **raibid-ci:** Event-driven workflows
+- **XPTui:** Parallel workstream coordination
 
 Special thanks to all raibid-labs contributors whose work made this possible.
 
