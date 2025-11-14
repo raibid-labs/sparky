@@ -72,8 +72,8 @@ just publish-weekly   # Publish this week's report
 just publish-monthly  # Publish this month's review
 ```
 
-**See [BLOG_PUBLISHING.md](./docs/BLOG_PUBLISHING.md) for blog details.**
-**See [IMPLEMENTATION_PROPOSAL.md](./IMPLEMENTATION_PROPOSAL.md) for full production details.**
+**See [blog-publishing.md](./docs/blog-publishing.md) for blog details.**
+**See [implementation-proposal.md](./docs/implementation-proposal.md) for full production details.**
 
 ## Architecture Overview
 
@@ -126,11 +126,11 @@ Publishers (docs, blog, social media)
 
 | Document | Description | Time |
 |----------|-------------|------|
-| **[Implementation Proposal](./IMPLEMENTATION_PROPOSAL.md)** | Rust + k3s architecture ⭐ | 30 min |
-| **[Parallel Workstreams](./PARALLEL_ISSUES.md)** | 18 GitHub issues ready to create | 20 min |
-| [OSS Quick Start](./QUICKSTART_OSS.md) | Prototype with Bash/Python | 15 min |
+| **[Implementation Proposal](./docs/implementation-proposal.md)** | Rust + k3s architecture ⭐ | 30 min |
+| **[Parallel Workstreams](./docs/parallel-issues.md)** | 18 GitHub issues ready to create | 20 min |
+| [OSS Quick Start](./docs/quickstart-oss.md) | Prototype with Bash/Python | 15 min |
 | [Justfile Reference](./justfile) | All available commands | 10 min |
-| [dgx-pixels Patterns](./DGX_PIXELS_ORCHESTRATION_PATTERNS.md) | Orchestration patterns reference | 60 min |
+| [dgx-pixels Patterns](./docs/dgx-pixels-orchestration-patterns.md) | Orchestration patterns reference | 60 min |
 
 ### Core Documentation
 
@@ -147,9 +147,13 @@ These documents informed the design (optional reading):
 
 | Resource | Description |
 |----------|-------------|
-| [Research Report](./RESEARCH_REPORT_DEV_AUTOMATION_2025.md) | External market research |
-| [Executive Summary](./EXECUTIVE_SUMMARY.md) | High-level findings |
-| [Tools & Libraries](./TOOLS_AND_LIBRARIES.md) | 100+ tools catalog |
+| [Research Report](./docs/research-report-dev-automation-2025.md) | External market research |
+| [Executive Summary](./docs/executive-summary.md) | High-level findings |
+| [Tools & Libraries](./docs/tools-and-libraries.md) | 100+ tools catalog |
+| [Analysis Summary](./docs/analysis-summary.md) | Analysis summary |
+| [dgx-pixels README](./docs/dgx-pixels-readme.md) | dgx-pixels reference |
+| [dgx-pixels Pattern References](./docs/dgx-pixels-pattern-references.md) | Pattern references |
+| [Quick Start Guide](./docs/quick-start-guide.md) | Quick start guide |
 
 ---
 
