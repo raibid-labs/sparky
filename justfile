@@ -235,17 +235,21 @@ health-check:
 # Demo
 # ============================================================================
 
-# Run demo of full pipeline
+# Run demo of full pipeline (daily by default)
 demo:
-    nu scripts/demo/run-demo.nu
+    nu scripts/pipeline.nu daily
 
 # Run demo of daily digest generation
 demo-daily:
-    nu scripts/demo/daily-digest.nu
+    nu scripts/pipeline.nu daily
 
 # Run demo of weekly report
 demo-weekly:
-    nu scripts/demo/weekly-report.nu
+    nu scripts/pipeline.nu weekly
+
+# Run demo of monthly review
+demo-monthly:
+    nu scripts/pipeline.nu monthly
 
 # ============================================================================
 # Configuration
@@ -319,6 +323,41 @@ db-seed:
 # ============================================================================
 # Utilities
 # ============================================================================
+
+# Install Ollama (local LLM)
+install-ollama:
+    @echo "Installing Ollama..."
+    curl -fsSL https://ollama.com/install.sh | sh
+    @echo "✅ Ollama installed"
+    @echo "Next: Run 'just pull-model' to download the LLM"
+
+# Pull the code-specialized LLM model
+pull-model:
+    @echo "Pulling qwen2.5-coder:1.5b model..."
+    ollama pull qwen2.5-coder:1.5b
+    @echo "✅ Model ready"
+
+# Install GitHub CLI
+install-gh:
+    @echo "Installing GitHub CLI..."
+    @echo "See: https://cli.github.com/manual/installation"
+    @echo "Then run: gh auth login"
+
+# Install all demo prerequisites
+install-demo-deps:
+    @echo "🚀 Installing Demo Prerequisites"
+    @echo "=================================="
+    @echo ""
+    just install-ollama
+    @echo ""
+    just pull-model
+    @echo ""
+    @echo "✅ Demo dependencies ready!"
+    @echo ""
+    @echo "Now you can run:"
+    @echo "  just demo-daily"
+    @echo "  just demo-weekly"
+    @echo "  just demo-monthly"
 
 # Install all dependencies
 install-deps:
