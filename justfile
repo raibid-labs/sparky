@@ -331,10 +331,10 @@ install-ollama:
     @echo "✅ Ollama installed"
     @echo "Next: Run 'just pull-model' to download the LLM"
 
-# Pull the code-specialized LLM model
+# Pull the LLM model for text generation
 pull-model:
-    @echo "Pulling qwen2.5-coder:1.5b model..."
-    ollama pull qwen2.5-coder:1.5b
+    @echo "Pulling llama3.2 model (better for prose)..."
+    ollama pull llama3.2
     @echo "✅ Model ready"
 
 # Install GitHub CLI
