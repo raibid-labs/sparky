@@ -56,13 +56,24 @@ just build
 just deploy-local
 
 # Run pipeline
-just pipeline-daily
+just demo-weekly
+
+# Publish to raibid-labs/docs blog
+just publish-weekly
 
 # Monitor
 just status
 ```
 
-**See [IMPLEMENTATION_PROPOSAL.md](./IMPLEMENTATION_PROPOSAL.md) for full details.**
+**Publishing Commands:**
+```bash
+just publish-daily    # Publish today's digest
+just publish-weekly   # Publish this week's report
+just publish-monthly  # Publish this month's review
+```
+
+**See [BLOG_PUBLISHING.md](./docs/BLOG_PUBLISHING.md) for blog details.**
+**See [IMPLEMENTATION_PROPOSAL.md](./IMPLEMENTATION_PROPOSAL.md) for full production details.**
 
 ## Architecture Overview
 
@@ -104,10 +115,10 @@ Publishers (docs, blog, social media)
 - **Social Media:** Twitter/LinkedIn posts
 
 ### 4. Multi-Channel Publishing
-- raibid-labs/docs repository (internal)
-- Dev.to (external blog)
-- Twitter/LinkedIn (social engagement)
-- GitHub Issues/Comments (team updates)
+- **raibid-labs/docs blog** (live! automated Quartz blog)
+- Dev.to (external blog) - planned
+- Twitter/LinkedIn (social engagement) - planned
+- GitHub Issues/Comments (team updates) - planned
 
 ## Documentation
 

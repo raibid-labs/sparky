@@ -203,9 +203,25 @@ analyze DATE:
 generate DATE:
     nu scripts/generate.nu --date {{DATE}}
 
-# Publish generated content
-publish DATE:
-    nu scripts/publish.nu --date {{DATE}}
+# Publish today's daily digest to raibid-labs/docs blog
+publish-daily:
+    nu scripts/publish.nu daily
+
+# Publish this week's report to raibid-labs/docs blog
+publish-weekly:
+    nu scripts/publish.nu weekly
+
+# Publish this month's review to raibid-labs/docs blog
+publish-monthly:
+    nu scripts/publish.nu monthly
+
+# Publish all unpublished reports to raibid-labs/docs blog
+publish-all:
+    nu scripts/publish.nu all
+
+# Dry run - show what would be published without actually publishing
+publish-dry-run MODE:
+    nu scripts/publish.nu {{MODE}} --dry-run
 
 # ============================================================================
 # Monitoring
