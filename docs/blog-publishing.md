@@ -4,6 +4,11 @@
 
 Sparky automatically publishes weekly, daily, and monthly reports to the raibid-labs/docs blog.
 
+**Current Status**: ✅ Blog is LIVE at https://raibid-labs.github.io/docs/blog/
+
+The first weekly report has been published! Check it out at:
+- https://raibid-labs.github.io/docs/blog/
+
 ## Blog Structure in raibid-labs/docs
 
 ```
@@ -34,21 +39,39 @@ author: Sparky
 ---
 ```
 
+## How It Works
+
+1. **Generate Report**: Sparky collects data and generates markdown
+2. **Publish Script**: `scripts/publish.nu` clones docs repo and adds report
+3. **Quartz Renders**: GitHub Pages automatically builds and deploys
+4. **Live in Minutes**: Blog post appears at raibid-labs.github.io/docs/blog/
+
+The blog infrastructure is already set up in raibid-labs/docs:
+- `content/blog/index.md` - Blog landing page
+- `content/blog/2025/` - Year-organized reports
+- Linked from main navigation
+- Appears in Explorer sidebar
+
 ## Publishing Workflow
 
-### Automated (Future)
+### Current (Manual)
 ```bash
-# Run in GitHub Actions
-just publish-weekly   # Auto-publishes to docs repo
-```
-
-### Manual (Current)
-```bash
-# Generate report
+# 1. Generate weekly report
 just demo-weekly
 
-# Publish to docs repo
+# 2. Publish to docs repo
 just publish-weekly
+
+# 3. Wait ~2-3 minutes for GitHub Pages to deploy
+# 4. Visit https://raibid-labs.github.io/docs/blog/
+```
+
+### Future (Automated)
+```bash
+# Planned: GitHub Actions runs nightly
+# - Generates reports automatically
+# - Publishes to blog
+# - No manual intervention needed
 ```
 
 ## Commands
