@@ -1,0 +1,112 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'docs/**'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-to-wiki:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better commit messages
+
+      - name: Checkout wiki repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync docs to wiki
+        run: |
+          set -e
+
+          # Navigate to wiki directory
+          cd wiki
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Clear existing content (except .git)
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+          # Copy all markdown files from docs directory
+          if [ -d "../docs" ]; then
+            # Copy all .md files, preserving directory structure
+            find ../docs -name "*.md" -type f | while read -r file; do
+              # Get relative path from docs directory
+              rel_path="${file#../docs/}"
+              # Create parent directories if needed
+              mkdir -p "$(dirname "$rel_path")"
+              # Copy file
+              cp "$file" "$rel_path"
+            done
+
+            # Copy images and assets if they exist
+            for ext in png jpg jpeg gif svg; do
+              find ../docs -name "*.$ext" -type f | while read -r file; do
+                rel_path="${file#../docs/}"
+                mkdir -p "$(dirname "$rel_path")"
+                cp "$file" "$rel_path"
+              done
+            done
+          fi
+
+          # Create Home.md from README.md if it exists, otherwise create a simple one
+          if [ -f "README.md" ]; then
+            cp "README.md" "Home.md"
+          elif [ ! -f "Home.md" ]; then
+            echo "# ${{ github.event.repository.name }}" > "Home.md"
+            echo "" >> "Home.md"
+            echo "Welcome to the ${{ github.event.repository.name }} wiki!" >> "Home.md"
+            echo "" >> "Home.md"
+            echo "## Documentation" >> "Home.md"
+            echo "" >> "Home.md"
+            # List all markdown files
+            find . -name "*.md" ! -name "Home.md" ! -name "_Sidebar.md" -type f | sort | while read -r md; do
+              name=$(basename "$md" .md)
+              path="${md#./}"
+              echo "- [$name]($path)" >> "Home.md"
+            done
+          fi
+
+          # Create _Sidebar.md for navigation
+          echo "# Navigation" > "_Sidebar.md"
+          echo "" >> "_Sidebar.md"
+          echo "## Documentation" >> "_Sidebar.md"
+          echo "" >> "_Sidebar.md"
+
+          # Group files by directory
+          find . -name "*.md" ! -name "Home.md" ! -name "_Sidebar.md" -type f | sort | while read -r md; do
+            name=$(basename "$md" .md)
+            # Convert filename to title (replace hyphens/underscores with spaces, capitalize)
+            title=$(echo "$name" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
+            path="${md#./}"
+            echo "- [$title]($path)" >> "_Sidebar.md"
+          done
+
+          # Check if there are any changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "Sync docs from repository @ ${{ github.sha }}"
+            git push
+            echo "✓ Wiki updated successfully"
+          else
+            echo "✓ No changes to wiki"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Wiki Sync Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Documentation has been synced to the [project wiki](https://github.com/${{ github.repository }}/wiki)" >> $GITHUB_STEP_SUMMARY
