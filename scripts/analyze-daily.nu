@@ -83,7 +83,22 @@ Use ONLY the data above. Be specific with names. Professional but casual tone."
     # Run Ollama
     print "🧠 Running Ollama (this may take 10-30 seconds)..."
 
-    let analysis = (echo $prompt | ollama run llama3.2)
+    let analysis_raw = (echo $prompt | ollama run llama3.2)
+
+    # Post-process: Convert repository references to proper markdown links
+    print "🔗 Adding repository links..."
+
+    # Get active repos from commits
+    let active_repos = ($commits | get repo | uniq)
+    mut analysis = $analysis_raw
+    for repo in $active_repos {
+        # Replace [repo-name] with [repo-name](https://github.com/raibid-labs/repo-name)
+        # But only if not already a link (not followed by parenthesis)
+        let pattern = $'\[($repo)\](?!\()'
+        let url = $'https://github.com/raibid-labs/($repo)'
+        let replacement = $'[($repo)]' + '(' + $url + ')'
+        $analysis = ($analysis | str replace --all --regex $pattern $replacement)
+    }
 
     # Create output directory
     mkdir $output_dir

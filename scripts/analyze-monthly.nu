@@ -170,7 +170,19 @@ Format: Markdown with clear headings, subheadings, and formatting"
     print "🧠 Running Ollama (this may take 60-120 seconds for comprehensive monthly review)..."
     print "   Note: Larger prompts take longer but produce better analysis"
 
-    let analysis = (echo $prompt | ollama run llama3.2)
+    let analysis_raw = (echo $prompt | ollama run llama3.2)
+
+    # Post-process: Convert repository references to proper markdown links
+    print "🔗 Adding repository links..."
+    mut analysis = $analysis_raw
+    for repo in $summary.active_repos {
+        # Replace [repo-name] with [repo-name](https://github.com/raibid-labs/repo-name)
+        # But only if not already a link (not followed by parenthesis)
+        let pattern = $'\[($repo)\](?!\()'
+        let url = $'https://github.com/raibid-labs/($repo)'
+        let replacement = $'[($repo)]' + '(' + $url + ')'
+        $analysis = ($analysis | str replace --all --regex $pattern $replacement)
+    }
 
     # Create output directory
     mkdir $output_dir
