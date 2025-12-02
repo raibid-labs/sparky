@@ -35,7 +35,7 @@ python3 docs/examples/analyze-ollama.py
 cat output/daily/$(date +%Y-%m-% d).md
 ```
 
-**See [QUICKSTART_OSS.md](./QUICKSTART_OSS.md) for this approach.**
+**See [quickstart-oss.md](./docs/quickstart-oss.md) for this approach.**
 
 ### For Production (Rust Implementation)
 

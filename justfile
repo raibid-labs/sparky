@@ -377,11 +377,29 @@ install-demo-deps:
 
 # Install all dependencies
 install-deps:
-    nu scripts/utils/install-deps.nu
+    @echo "📦 Installing dependencies..."
+    @echo "1. Install Rust: https://rustup.rs/"
+    @echo "2. Install Just: cargo install just"
+    @echo "3. Install Nushell: cargo install nu"
+    @echo "4. Install GitHub CLI: https://cli.github.com/"
+    @echo "5. Install Ollama: just install-ollama"
+    @echo ""
+    @echo "Run 'just check-requirements' to verify installation"
 
 # Check system requirements
 check-requirements:
-    nu scripts/utils/check-requirements.nu
+    @echo "🔍 Checking system requirements..."
+    @echo ""
+    @echo -n "Rust: " && (rustc --version 2>/dev/null || echo "❌ Not installed")
+    @echo -n "Cargo: " && (cargo --version 2>/dev/null || echo "❌ Not installed")
+    @echo -n "Just: " && (just --version 2>/dev/null || echo "❌ Not installed")
+    @echo -n "Nushell: " && (nu --version 2>/dev/null || echo "❌ Not installed")
+    @echo -n "GitHub CLI: " && (gh --version 2>/dev/null | head -1 || echo "❌ Not installed")
+    @echo -n "Ollama: " && (ollama --version 2>/dev/null || echo "❌ Not installed (optional)")
+    @echo -n "Docker: " && (docker --version 2>/dev/null || echo "❌ Not installed (optional)")
+    @echo -n "kubectl: " && (kubectl version --client --short 2>/dev/null || echo "❌ Not installed (optional)")
+    @echo ""
+    @echo "✅ Requirements check complete"
 
 # Generate API documentation
 docs:
