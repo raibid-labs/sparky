@@ -9,6 +9,10 @@ on:
       - 'docs/**'
   workflow_dispatch:  # Allow manual trigger
 
+# Required for pushing to wiki repository
+permissions:
+  contents: write
+
 jobs:
   sync-to-wiki:
     runs-on: ubuntu-latest
