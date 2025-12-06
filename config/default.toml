@@ -1,0 +1,35 @@
+# Sparky Default Configuration
+# Copy this file and customize for your environment
+
+[general]
+project_name = "sparky"
+version = "0.1.0"
+
+[collection]
+org_name = "raibid-labs"
+max_repos = 100
+max_prs_per_repo = 50
+max_issues_per_repo = 50
+
+[collection.lookback_days]
+daily = 1
+weekly = 7
+monthly = 30
+
+[paths]
+data_raw = "data/raw"
+data_processed = "data/processed"
+output = "output"
+
+[logging]
+level = "info"  # Options: debug, info, warn, error
+timestamp_format = "%Y-%m-%d %H:%M:%S"
+
+[github]
+cli_tool = "gh"
+rate_limit_check = true
+
+[llm]
+provider = "ollama"
+model = "qwen2.5-coder:1.5b"
+host = "http://localhost:11434"
