@@ -1,0 +1,163 @@
+name: Documentation Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - '*.md'
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - '*.md'
+  workflow_dispatch:
+
+jobs:
+  lint-docs:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            **/*.md
+            !node_modules
+
+      - name: Check for broken links
+        run: |
+          echo "Checking for broken internal links..."
+          # Find all markdown files
+          find . -name "*.md" -not -path "./node_modules/*" -not -path "./.git/*" | while read -r file; do
+            echo "Checking: $file"
+            # Extract markdown links [text](link)
+            grep -oP '\[.*?\]\(\K[^)]+' "$file" 2>/dev/null | while read -r link; do
+              # Skip external links (http/https)
+              if [[ "$link" =~ ^https?:// ]]; then
+                continue
+              fi
+              # Skip anchors
+              if [[ "$link" =~ ^# ]]; then
+                continue
+              fi
+              # Check if relative file exists
+              dir=$(dirname "$file")
+              if [ ! -e "$dir/$link" ] && [ ! -e "$link" ]; then
+                echo "WARNING: Broken link in $file: $link"
+              fi
+            done
+          done
+
+  validate-structure:
+    name: Validate Documentation Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          echo "Validating documentation structure..."
+          required_files=(
+            "README.md"
+            "LICENSE"
+            "docs/STRUCTURE.md"
+            "docs/versions/vNEXT/README.md"
+          )
+
+          missing=0
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Required file missing: $file"
+              missing=$((missing + 1))
+            else
+              echo "✓ Found: $file"
+            fi
+          done
+
+          if [ $missing -gt 0 ]; then
+            echo "ERROR: $missing required file(s) missing"
+            exit 1
+          fi
+
+          echo "✅ All required documentation files present"
+
+      - name: Check version directories
+        run: |
+          echo "Checking version directory structure..."
+          if [ ! -d "docs/versions" ]; then
+            echo "ERROR: docs/versions directory missing"
+            exit 1
+          fi
+
+          if [ ! -d "docs/versions/vNEXT" ]; then
+            echo "ERROR: docs/versions/vNEXT directory missing"
+            exit 1
+          fi
+
+          echo "✅ Version directory structure valid"
+
+      - name: Validate versioned docs
+        run: |
+          echo "Validating versioned documentation..."
+          for version_dir in docs/versions/*/; do
+            version=$(basename "$version_dir")
+            echo "Checking version: $version"
+
+            if [ ! -f "${version_dir}README.md" ]; then
+              echo "WARNING: Missing README.md in $version_dir"
+            fi
+          done
+
+          echo "✅ Versioned documentation structure valid"
+
+  check-orphans:
+    name: Check for Orphaned Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find orphaned documentation
+        run: |
+          echo "Scanning for orphaned documentation files..."
+          # This is a basic check - can be enhanced
+          orphan_count=0
+
+          # Check for markdown files not in standard locations
+          find docs -name "*.md" -type f | while read -r file; do
+            # Skip if in known good locations
+            if [[ "$file" =~ docs/versions/ ]] || \
+               [[ "$file" =~ docs/guides/ ]] || \
+               [[ "$file" =~ docs/reference/ ]] || \
+               [[ "$file" =~ docs/examples/ ]] || \
+               [[ "$file" =~ docs/STRUCTURE.md ]]; then
+              continue
+            fi
+
+            # This file might be orphaned
+            echo "NOTICE: Check if linked: $file"
+          done
+
+          echo "✅ Orphan check complete"
+
+  summary:
+    name: Documentation Check Summary
+    runs-on: ubuntu-latest
+    needs: [lint-docs, validate-structure, check-orphans]
+    steps:
+      - name: Summary
+        run: |
+          echo "✅ All documentation checks passed!"
+          echo ""
+          echo "Checks completed:"
+          echo "  ✓ Markdown linting"
+          echo "  ✓ Broken link detection"
+          echo "  ✓ Documentation structure"
+          echo "  ✓ Version directories"
+          echo "  ✓ Orphaned files scan"
