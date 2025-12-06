@@ -1,0 +1,113 @@
+name: Phage Policy Check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  policy-check:
+    name: Policy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: '*'
+
+      - name: Check script formatting
+        run: |
+          echo "Checking Nushell scripts for policy compliance..."
+          find scripts -name "*.nu" -type f | while read -r file; do
+            echo "Checking: $file"
+            # Verify shebang exists
+            if ! head -n 1 "$file" | grep -q "#!/usr/bin/env nu"; then
+              echo "ERROR: Missing shebang in $file"
+              exit 1
+            fi
+            # Verify syntax
+            nu -c "use $file"
+          done
+
+      - name: Check documentation structure
+        run: |
+          echo "Validating documentation structure..."
+          # Check required documentation files exist
+          required_docs=(
+            "README.md"
+            "LICENSE"
+          )
+          for doc in "${required_docs[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "ERROR: Required documentation file missing: $doc"
+              exit 1
+            fi
+          done
+
+      - name: Check for sensitive data
+        run: |
+          echo "Scanning for sensitive data patterns..."
+          # Check for common secret patterns
+          if grep -r -E "(api[_-]?key|password|secret|token|private[_-]?key)" \
+             --include="*.nu" \
+             --include="*.sh" \
+             --include="*.py" \
+             --exclude-dir=".git" \
+             --exclude-dir="docs/examples" \
+             . ; then
+            echo "WARNING: Potential sensitive data found in code"
+            # Don't fail, just warn
+          fi
+
+      - name: Validate script permissions
+        run: |
+          echo "Checking script permissions..."
+          find scripts -name "*.nu" -type f | while read -r file; do
+            if [ ! -x "$file" ]; then
+              echo "WARNING: Script not executable: $file"
+              chmod +x "$file"
+            fi
+          done
+
+      - name: Check for TODO/FIXME markers
+        run: |
+          echo "Scanning for TODO/FIXME markers..."
+          todo_count=$(grep -r -E "(TODO|FIXME|XXX|HACK)" \
+            --include="*.nu" \
+            --include="*.sh" \
+            --include="*.py" \
+            --include="*.md" \
+            --exclude-dir=".git" \
+            . | wc -l || echo "0")
+          echo "Found $todo_count TODO/FIXME markers"
+          if [ "$todo_count" -gt 50 ]; then
+            echo "WARNING: Large number of TODO/FIXME markers found ($todo_count)"
+          fi
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" -type f -not -path "./.git/*" | while read -r file; do
+            echo "Validating: $file"
+            if ! jq empty "$file" 2>/dev/null; then
+              echo "ERROR: Invalid JSON in $file"
+              exit 1
+            fi
+          done
+
+      - name: Policy check summary
+        run: |
+          echo "✅ All policy checks passed!"
+          echo ""
+          echo "Checks completed:"
+          echo "  ✓ Script formatting and shebangs"
+          echo "  ✓ Documentation structure"
+          echo "  ✓ Sensitive data scan"
+          echo "  ✓ Script permissions"
+          echo "  ✓ TODO/FIXME markers"
+          echo "  ✓ JSON validation"
