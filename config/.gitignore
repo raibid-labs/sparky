@@ -1,0 +1,8 @@
+# Ignore local and environment-specific configs
+local.toml
+production.toml
+development.toml
+*.local.toml
+
+# Keep the default template
+!default.toml
