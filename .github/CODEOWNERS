@@ -1,0 +1,30 @@
+# CODEOWNERS for raibid-labs/sparky
+#
+# These owners will be the default reviewers for pull requests.
+# They will be automatically requested for review when someone opens a PR.
+
+# Global owners - own everything unless a later match takes precedence
+* @beengud
+
+# GitHub workflows and CI/CD
+/.github/ @beengud
+/.github/workflows/ @beengud
+
+# Release and version management
+/docs/versions/ @beengud
+CHANGELOG.md @beengud
+/justfile @beengud
+
+# Core scripts
+/scripts/ @beengud
+/scripts/lib/ @beengud
+
+# Documentation
+/docs/ @beengud
+*.md @beengud
+
+# Configuration files
+*.yml @beengud
+*.yaml @beengud
+*.toml @beengud
+*.json @beengud
