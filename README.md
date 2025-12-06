@@ -122,38 +122,44 @@ Publishers (docs, blog, social media)
 
 ## Documentation
 
+### 📚 Documentation Hub
+
+All documentation is versioned and organized. See [Documentation Structure](./docs/STRUCTURE.md) for details.
+
 ### 🚀 Start Here
 
 | Document | Description | Time |
 |----------|-------------|------|
-| **[Implementation Proposal](./docs/implementation-proposal.md)** | Rust + k3s architecture ⭐ | 30 min |
-| **[Parallel Workstreams](./docs/parallel-issues.md)** | 18 GitHub issues ready to create | 20 min |
-| [OSS Quick Start](./docs/quickstart-oss.md) | Prototype with Bash/Python | 15 min |
+| **[Quickstart Guide](./docs/versions/vNEXT/quickstart.md)** | Get up and running quickly ⭐ | 15 min |
+| **[Implementation Proposal](./docs/versions/vNEXT/implementation.md)** | Rust + k3s architecture | 30 min |
+| **[Architecture](./docs/versions/vNEXT/architecture.md)** | System design and components | 30 min |
 | [Justfile Reference](./justfile) | All available commands | 10 min |
-| [dgx-pixels Patterns](./docs/dgx-pixels-orchestration-patterns.md) | Orchestration patterns reference | 60 min |
 
-### Core Documentation
+### Development Guides
 
 | Document | Description |
 |----------|-------------|
-| [Zero-Cost Architecture](./docs/zero-cost-architecture.md) | OSS design decisions, approaches |
-| [Model Research](./research/git-commit-summarization-oss-models.md) | Best OSS models for summarization |
-| [Architecture (Original)](./docs/architecture.md) | Full system design |
-| [Parallel Workstreams](./docs/parallel-workstreams.md) | Development organization |
+| [Parallel Workstreams](./docs/guides/parallel-workstreams.md) | Development organization |
+| [Parallel Issues](./docs/guides/parallel-issues.md) | GitHub issues breakdown |
+| [Blog Publishing](./docs/guides/blog-publishing.md) | Publishing to raibid-labs/docs |
 
-### Additional Research
+### Technical Reference
 
-These documents informed the design (optional reading):
+| Document | Description |
+|----------|-------------|
+| [Zero-Cost Architecture](./docs/reference/zero-cost-architecture.md) | OSS design decisions |
+| [OSS Deployment Strategy](./docs/reference/oss-deployment-strategy.md) | Deployment approaches |
+| [dgx-pixels Patterns](./docs/reference/dgx-pixels-orchestration-patterns.md) | Orchestration patterns |
+
+### Research
+
+Technical investigations and findings (optional reading):
 
 | Resource | Description |
 |----------|-------------|
-| [Research Report](./docs/research-report-dev-automation-2025.md) | External market research |
-| [Executive Summary](./docs/executive-summary.md) | High-level findings |
-| [Tools & Libraries](./docs/tools-and-libraries.md) | 100+ tools catalog |
-| [Analysis Summary](./docs/analysis-summary.md) | Analysis summary |
-| [dgx-pixels README](./docs/dgx-pixels-readme.md) | dgx-pixels reference |
-| [dgx-pixels Pattern References](./docs/dgx-pixels-pattern-references.md) | Pattern references |
-| [Quick Start Guide](./docs/quick-start-guide.md) | Quick start guide |
+| [Model Research](./research/git-commit-summarization-oss-models.md) | Best OSS models for summarization |
+| [Research Report](./research/research-report-dev-automation-2025.md) | External market research |
+| [Quick Start Guide](./research/quick-start-guide.md) | Early quick start research |
 
 ---
 
