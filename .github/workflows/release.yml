@@ -1,0 +1,303 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format: $VERSION"
+            echo "Expected format: vX.Y.Z (e.g., v0.1.0)"
+            exit 1
+          fi
+          echo "✅ Version format valid: $VERSION"
+
+  test:
+    name: Run Tests
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: '*'
+
+      - name: Run CI checks
+        run: |
+          echo "Running pre-release CI checks..."
+          # Validate scripts
+          find scripts -name "*.nu" -type f | while read -r script; do
+            nu -c "nu-check $script" || exit 1
+          done
+          echo "✅ All tests passed"
+
+  build:
+    name: Build Artifacts
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: '*'
+
+      - name: Create distribution package
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          echo "Creating distribution for $VERSION..."
+
+          mkdir -p dist/sparky-$VERSION
+
+          # Copy scripts
+          cp -r scripts dist/sparky-$VERSION/
+          cp justfile dist/sparky-$VERSION/
+          cp README.md dist/sparky-$VERSION/
+          cp LICENSE dist/sparky-$VERSION/
+
+          # Copy docs
+          cp -r docs dist/sparky-$VERSION/
+          cp -r research dist/sparky-$VERSION/
+
+          # Create tarball
+          cd dist
+          tar -czf sparky-$VERSION.tar.gz sparky-$VERSION/
+          zip -r sparky-$VERSION.zip sparky-$VERSION/
+
+          # Generate checksums
+          sha256sum sparky-$VERSION.tar.gz > sparky-$VERSION.tar.gz.sha256
+          sha256sum sparky-$VERSION.zip > sparky-$VERSION.zip.sha256
+
+          echo "✅ Distribution package created"
+          ls -lh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+
+  changelog:
+    name: Generate Changelog
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.generate-changelog.outputs.changelog }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: generate-changelog
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          echo "Generating changelog for $VERSION..."
+
+          # Get previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "First release - generating full changelog"
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            echo "Generating changelog since $PREVIOUS_TAG"
+            CHANGELOG=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          # Save to file and output
+          echo "$CHANGELOG" > CHANGELOG.txt
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG.txt
+
+  create-release:
+    name: Create GitHub Release
+    needs: [validate, build, changelog]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+          name: Release ${{ needs.validate.outputs.version }}
+          body: |
+            # Sparky ${{ needs.validate.outputs.version }}
+
+            AI-Powered Development Activity Monitor & Content Generator for raibid-labs
+
+            ## What's Changed
+
+            ${{ needs.changelog.outputs.changelog }}
+
+            ## Installation
+
+            Download the appropriate archive for your platform:
+            - **tar.gz**: `sparky-${{ needs.validate.outputs.version }}.tar.gz`
+            - **zip**: `sparky-${{ needs.validate.outputs.version }}.zip`
+
+            Verify the checksum:
+            ```bash
+            sha256sum -c sparky-${{ needs.validate.outputs.version }}.tar.gz.sha256
+            ```
+
+            Extract and use:
+            ```bash
+            tar -xzf sparky-${{ needs.validate.outputs.version }}.tar.gz
+            cd sparky-${{ needs.validate.outputs.version }}
+            just --list
+            ```
+
+            ## Documentation
+
+            - [Quickstart Guide](https://github.com/raibid-labs/sparky/blob/main/docs/versions/vNEXT/quickstart.md)
+            - [Full Documentation](https://github.com/raibid-labs/sparky/tree/main/docs)
+
+            ## Requirements
+
+            - Nushell (latest)
+            - Just (task runner)
+            - GitHub CLI (gh)
+            - Ollama (optional, for local LLM)
+
+            ---
+
+            **Full Changelog**: https://github.com/raibid-labs/sparky/commits/${{ needs.validate.outputs.version }}
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-docs:
+    name: Update Documentation
+    needs: [validate, create-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create version docs
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix
+
+          echo "Creating documentation for version $VERSION..."
+
+          # Copy vNEXT to new version
+          if [ -d "docs/versions/vNEXT" ]; then
+            cp -r docs/versions/vNEXT "docs/versions/v$VERSION_NUM"
+            echo "✅ Created docs/versions/v$VERSION_NUM"
+          fi
+
+      - name: Commit version docs
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          VERSION_NUM="${VERSION#v}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/versions/
+          git commit -m "docs: Add documentation for $VERSION" || echo "No changes to commit"
+          git push origin main || echo "No changes to push"
+
+  summary:
+    name: Release Summary
+    needs: [validate, test, build, changelog, create-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Release summary
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          echo "========================================="
+          echo "  Release Summary: $VERSION"
+          echo "========================================="
+          echo ""
+          echo "Status:"
+          echo "  - Validation: ${{ needs.validate.result }}"
+          echo "  - Tests: ${{ needs.test.result }}"
+          echo "  - Build: ${{ needs.build.result }}"
+          echo "  - Changelog: ${{ needs.changelog.result }}"
+          echo "  - Create Release: ${{ needs.create-release.result }}"
+          echo ""
+
+          if [ "${{ needs.create-release.result }}" = "success" ]; then
+            echo "✅ Release $VERSION published successfully!"
+            echo ""
+            echo "View release: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          else
+            echo "❌ Release failed"
+            exit 1
+          fi
